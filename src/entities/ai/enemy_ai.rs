@@ -1,6 +1,8 @@
-use std::{ops::Add, time::Duration};
+use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_rand_utils::prelude::*;
+use bevy_transform_utils::move_towards;
 
 use crate::entities::{enemy::*, shared::Movable};
 
@@ -29,36 +31,23 @@ pub fn idle_enemy_behaviour(
     time: Res<Time>,
 ) {
     for (mut transform, mut idle_state, movable) in query.iter_mut() {
-        let distance = transform.translation.distance(idle_state.idle_move);
-
-        if distance < 50.0 {
-            if !idle_state.delay.finished() {
-                idle_state.delay.tick(time.delta());
+        if !idle_state.delay.finished() {
+            idle_state.delay.tick(time.delta());
+        } else {
+            if let Some(rest_distance) = move_towards(
+                &mut transform,
+                idle_state.idle_move,
+                movable.speed as f32,
+                &time,
+                40.0,
+            ) {
+                warn!(rest_distance);
             } else {
-                warn!("Adding distance");
-
-                let mut x = fastrand::i32(70..idle_state.idle_walk_distance) as f32; // TODO implement a better function for generating offset vector with min distance from center
-
-                if fastrand::bool() {
-                    x *= -1.0; // TODO could not fiure out how rand crate works with ranges, I need negative-to-positive range, just do it myself, I guess
-                }
-
-                let mut y = fastrand::i32(70..idle_state.idle_walk_distance) as f32; // TODO implement a better function
-
-                if fastrand::bool() {
-                    y *= -1.0;
-                }
-
-                idle_state.idle_move = idle_state.idle_move.add(Vec3::new(x, y, 0.0));
+                warn!("Assigning new vector");
+                idle_state.idle_move += Vec3::new_random(&50.0, &80.0);
 
                 idle_state.delay.reset();
             }
-        } else {
-            // TODO move this into a utility function
-            transform.translation = transform.translation.lerp(
-                idle_state.idle_move,
-                (movable.speed as f32 / distance) * time.delta_seconds(),
-            );
         }
     }
 }

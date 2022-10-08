@@ -7,7 +7,6 @@ use super::{
 
 pub fn spawn_enemies(mut commands: Commands) {
     spawn_enemy("Enemy1", &mut commands);
-    spawn_enemy("Enemy2", &mut commands);
 }
 
 pub fn log_enemies_on_spawn(query: Query<&DisplayName, Added<Enemy>>) {
