@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
+use crate::entities::player::{MouseControlled, TankTurretBundle};
+
 use super::{
     enemy::{Enemy, EnemyBundle},
-    player::PlayerBundle,
+    player::{PlayerControlled, TankBundle},
     shared::DisplayName,
 };
 
@@ -25,5 +27,17 @@ pub fn log_enemies_on_spawn(query: Query<&DisplayName, Added<Enemy>>) {
 }
 
 pub fn spawn_player(mut commands: Commands) {
-    commands.spawn().insert_bundle(PlayerBundle::new());
+    let tank_tower = commands
+        .spawn()
+        .insert_bundle(TankTurretBundle::new(1))
+        .insert(MouseControlled::default())
+        .id();
+
+    commands
+        .spawn()
+        .insert_bundle(TankBundle::new())
+        .insert(PlayerControlled::default())
+        .push_children(&[tank_tower]);
+
+    info!("Spawned player");
 }

@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use self::{ai::enemy_ai::idle_enemy_behaviour, player_input::handle_player_movement, spawner::*};
+use self::{
+    ai::enemy_ai::idle_enemy_behaviour,
+    player_input::{handle_player_movement, rotate_tank_tower_to_cursor},
+    spawner::*,
+};
 
 pub mod ai;
 pub mod enemy;
@@ -8,7 +12,6 @@ pub mod player;
 pub mod player_input;
 pub mod shared;
 pub mod spawner;
-
 pub struct EntitiesPlugin;
 
 #[derive(SystemLabel)]
@@ -28,7 +31,8 @@ impl Plugin for EntitiesPlugin {
         app.add_system_set(
             SystemSet::new()
                 .label(GameSystems::PlayerInput)
-                .with_system(handle_player_movement),
+                .with_system(handle_player_movement)
+                .with_system(rotate_tank_tower_to_cursor),
         );
 
         app.add_system_set(

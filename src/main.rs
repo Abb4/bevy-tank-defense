@@ -1,4 +1,5 @@
 use bevy::{log::LogSettings, prelude::*};
+use bevy_mouse_position_component::{MousePosition2d, MousePositionPlugin};
 use entities::{player::PlayerAction, EntitiesPlugin};
 use leafwing_input_manager::prelude::*;
 
@@ -12,12 +13,16 @@ fn main() {
             filter: "debug,wgpu_core=warn,wgpu_hal=warn".into(),
             level: bevy::log::Level::DEBUG,
         })
-        .add_startup_system(setup)
         .add_plugin(InputManagerPlugin::<PlayerAction>::default())
+        .add_plugin(MousePositionPlugin)
         .add_plugin(EntitiesPlugin)
+        .add_startup_system(add_camera_with_tracking)
         .run();
 }
 
-fn setup(mut commands: Commands) {
-    commands.spawn_bundle(Camera2dBundle::default());
+fn add_camera_with_tracking(mut commands: Commands) {
+    commands
+        .spawn()
+        .insert_bundle(Camera2dBundle::default())
+        .insert(MousePosition2d::default());
 }

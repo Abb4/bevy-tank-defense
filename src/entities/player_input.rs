@@ -1,10 +1,26 @@
 use bevy::prelude::*;
+use bevy_mouse_position_component::MousePosition2d;
+use bevy_transform_utils::get_angle_from_transform;
 use leafwing_input_manager::prelude::*;
 
 use super::{
-    player::{PlayerAction, PlayerBundle, PlayerControlled},
+    player::{MouseControlled, PlayerAction, PlayerControlled, TankBundle},
     shared::Movable,
 };
+
+pub fn add_input_manager(player_bundle: &mut TankBundle) {
+    let player_input = InputManagerBundle::<PlayerAction> {
+        action_state: ActionState::default(),
+        input_map: InputMap::new([
+            (KeyCode::W, PlayerAction::MoveForward),
+            (KeyCode::S, PlayerAction::MoveBackwards),
+            (KeyCode::A, PlayerAction::TurnLeft),
+            (KeyCode::D, PlayerAction::TurnRight),
+        ]),
+    };
+
+    player_bundle.player_input = player_input;
+}
 
 pub fn handle_player_movement(
     mut query: Query<
@@ -30,20 +46,18 @@ pub fn handle_player_movement(
         transform.rotate_z(movable.rotation_speed_rad * time.delta_seconds());
     }
     if action_state.pressed(PlayerAction::TurnRight) {
-        transform.rotate_z(movable.rotation_speed_rad * time.delta_seconds());
+        transform.rotate_z((-1.0) * movable.rotation_speed_rad * time.delta_seconds());
     }
 }
 
-pub fn add_input_manager(player_bundle: &mut PlayerBundle) {
-    let player_input = InputManagerBundle::<PlayerAction> {
-        action_state: ActionState::default(),
-        input_map: InputMap::new([
-            (KeyCode::W, PlayerAction::MoveForward),
-            (KeyCode::S, PlayerAction::MoveBackwards),
-            (KeyCode::A, PlayerAction::TurnLeft),
-            (KeyCode::D, PlayerAction::TurnRight),
-        ]),
-    };
+pub fn rotate_tank_tower_to_cursor(
+    mut query: Query<(&mut Transform, &GlobalTransform), With<MouseControlled>>,
+    mouse_position_q: Query<&MousePosition2d>,
+) {
+    let mouse_position = mouse_position_q.single().world_pos;
+    let (mut transform, global_translation) = query.single_mut();
 
-    player_bundle.player_input = player_input;
+    let angle = get_angle_from_transform(&global_translation.compute_transform(), &mouse_position);
+
+    transform.rotate_z(angle);
 }
