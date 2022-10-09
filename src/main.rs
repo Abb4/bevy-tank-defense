@@ -1,6 +1,6 @@
-use bevy::{prelude::*, log::LogSettings};
-
-use crate::entities::*;
+use bevy::{log::LogSettings, prelude::*};
+use entities::{player::PlayerAction, EntitiesPlugin};
+use leafwing_input_manager::prelude::*;
 
 pub mod entities;
 
@@ -13,10 +13,10 @@ fn main() {
             level: bevy::log::Level::DEBUG,
         })
         .add_startup_system(setup)
+        .add_plugin(InputManagerPlugin::<PlayerAction>::default())
         .add_plugin(EntitiesPlugin)
         .run();
 }
-
 
 fn setup(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());

@@ -36,7 +36,10 @@ impl EnemyBundle {
                 idle_walk_distance: 200,
                 ..Default::default()
             },
-            movable: Movable { speed: 50 },
+            movable: Movable {
+                speed: 50,
+                ..Default::default()
+            },
             ..Default::default()
         }
     }
