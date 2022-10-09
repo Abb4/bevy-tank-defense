@@ -43,8 +43,7 @@ pub fn idle_enemy_behaviour(
             ) {
                 warn!(rest_distance);
             } else {
-                warn!("Assigning new vector");
-                idle_state.idle_move += Vec3::new_random(&50.0, &80.0);
+                idle_state.idle_move += Vec3::new_random_signed(&50.0, &80.0);
 
                 idle_state.delay.reset();
             }
