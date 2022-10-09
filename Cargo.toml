@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.8.1"
+fastrand = "1.8.0"
+bevy-transform-utils = { git = "https://github.com/Abb4/bevy-transform-utils" }
+bevy-rand-utils = { git = "https://github.com/Abb4/bevy-rand-utils", branch = "release" }
