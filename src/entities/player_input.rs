@@ -9,14 +9,18 @@ use super::{
 };
 
 pub fn add_input_manager(player_bundle: &mut TankBundle) {
+    let mut input_map = InputMap::default();
+
+    input_map
+        .insert(KeyCode::W, PlayerAction::MoveForward)
+        .insert(KeyCode::S, PlayerAction::MoveBackwards)
+        .insert(KeyCode::A, PlayerAction::TurnLeft)
+        .insert(KeyCode::D, PlayerAction::TurnRight)
+        .insert(MouseButton::Left, PlayerAction::FireCannon);
+
     let player_input = InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
-        input_map: InputMap::new([
-            (KeyCode::W, PlayerAction::MoveForward),
-            (KeyCode::S, PlayerAction::MoveBackwards),
-            (KeyCode::A, PlayerAction::TurnLeft),
-            (KeyCode::D, PlayerAction::TurnRight),
-        ]),
+        input_map: input_map,
     };
 
     player_bundle.player_input = player_input;
@@ -50,7 +54,26 @@ pub fn handle_player_movement(
     }
 }
 
-pub fn rotate_tank_tower_to_cursor(
+pub fn handle_player_firing(
+    mut query: Query<
+        (
+            &ActionState<PlayerAction>,
+            &GlobalTransform,
+            &MouseControlled,
+        ),
+        With<PlayerControlled>,
+    >,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    let (action_state, global_transform, movable) = query.single_mut();
+
+    if action_state.just_pressed(PlayerAction::FireCannon) {
+        println!("fire!");
+    }
+}
+
+pub fn rotate_tank_turet_to_cursor(
     mut query: Query<(&mut Transform, &GlobalTransform), With<MouseControlled>>,
     mouse_position_q: Query<&MousePosition2d>,
 ) {

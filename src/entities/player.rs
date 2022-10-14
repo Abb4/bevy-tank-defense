@@ -9,6 +9,7 @@ pub enum PlayerAction {
     MoveBackwards,
     TurnLeft,
     TurnRight,
+    FireCannon
 }
 
 #[derive(Component, Default)]
