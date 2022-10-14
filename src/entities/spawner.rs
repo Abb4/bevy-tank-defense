@@ -1,6 +1,10 @@
 use bevy::prelude::*;
+use leafwing_input_manager::InputManagerBundle;
 
-use crate::entities::player::{MouseControlled, TankTurretBundle};
+use crate::entities::{
+    player::{MouseControlled, PlayerAction, TankTurretBundle},
+    player_input::get_input_manager,
+};
 
 use super::{
     enemy::{Enemy, EnemyBundle},
@@ -31,13 +35,15 @@ pub fn spawn_player(mut commands: Commands) {
         .spawn()
         .insert_bundle(TankTurretBundle::new(1))
         .insert(MouseControlled::default())
+        .insert_bundle(get_input_manager())
         .id();
 
     commands
         .spawn()
         .insert_bundle(TankBundle::new())
         .insert(PlayerControlled::default())
-        .push_children(&[tank_tower]);
+        .insert_bundle(get_input_manager())
+        .add_child(tank_tower);
 
     info!("Spawned player");
 }

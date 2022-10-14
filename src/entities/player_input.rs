@@ -3,12 +3,14 @@ use bevy_mouse_position_component::MousePosition2d;
 use bevy_transform_utils::get_angle_from_transform;
 use leafwing_input_manager::prelude::*;
 
+use crate::entities::particles::{ParticleBundle, ParticleLinearMove};
+
 use super::{
     player::{MouseControlled, PlayerAction, PlayerControlled, TankBundle},
     shared::Movable,
 };
 
-pub fn add_input_manager(player_bundle: &mut TankBundle) {
+pub fn get_input_manager() -> InputManagerBundle<PlayerAction> {
     let mut input_map = InputMap::default();
 
     input_map
@@ -18,12 +20,10 @@ pub fn add_input_manager(player_bundle: &mut TankBundle) {
         .insert(KeyCode::D, PlayerAction::TurnRight)
         .insert(MouseButton::Left, PlayerAction::FireCannon);
 
-    let player_input = InputManagerBundle::<PlayerAction> {
+    InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
         input_map: input_map,
-    };
-
-    player_bundle.player_input = player_input;
+    }
 }
 
 pub fn handle_player_movement(
@@ -33,43 +33,63 @@ pub fn handle_player_movement(
     >,
     time: Res<Time>,
 ) {
-    let (action_state, mut transform, movable) = query.single_mut();
+    for (action_state, mut transform, movable) in query.iter_mut() {
+        if action_state.pressed(PlayerAction::MoveForward) {
+            let movement_direction = transform.rotation * Vec3::Y;
 
-    if action_state.pressed(PlayerAction::MoveForward) {
-        let movement_direction = transform.rotation * Vec3::Y;
+            transform.translation +=
+                movement_direction * movable.speed as f32 * time.delta_seconds()
+        }
+        if action_state.pressed(PlayerAction::MoveBackwards) {
+            let movement_direction = transform.rotation * Vec3::Y;
 
-        transform.translation += movement_direction * movable.speed as f32 * time.delta_seconds()
-    }
-    if action_state.pressed(PlayerAction::MoveBackwards) {
-        let movement_direction = transform.rotation * Vec3::Y;
-
-        transform.translation +=
-            (-1.0) * movement_direction * movable.speed as f32 * time.delta_seconds()
-    }
-    if action_state.pressed(PlayerAction::TurnLeft) {
-        transform.rotate_z(movable.rotation_speed_rad * time.delta_seconds());
-    }
-    if action_state.pressed(PlayerAction::TurnRight) {
-        transform.rotate_z((-1.0) * movable.rotation_speed_rad * time.delta_seconds());
+            transform.translation +=
+                (-1.0) * movement_direction * movable.speed as f32 * time.delta_seconds()
+        }
+        if action_state.pressed(PlayerAction::TurnLeft) {
+            transform.rotate_z(movable.rotation_speed_rad * time.delta_seconds());
+        }
+        if action_state.pressed(PlayerAction::TurnRight) {
+            transform.rotate_z((-1.0) * movable.rotation_speed_rad * time.delta_seconds());
+        }
     }
 }
 
 pub fn handle_player_firing(
     mut query: Query<
-        (
-            &ActionState<PlayerAction>,
-            &GlobalTransform,
-            &MouseControlled,
-        ),
-        With<PlayerControlled>,
+        (&ActionState<PlayerAction>, &GlobalTransform),
+        With<MouseControlled>,
     >,
-    time: Res<Time>,
     mut commands: Commands,
 ) {
-    let (action_state, global_transform, movable) = query.single_mut();
+    for (action_state, global_transform) in query.iter_mut() {
+        if action_state.just_pressed(PlayerAction::FireCannon) {
 
-    if action_state.just_pressed(PlayerAction::FireCannon) {
-        println!("fire!");
+            let projectile_sprite = Sprite {
+                custom_size: Some(Vec2::new(20.0, 20.0)),
+                color: Color::rgb(0.0, 0.0, 1.0),
+                ..Default::default()
+            };
+
+            let transform = global_transform.compute_transform();
+
+            let particle_pos = transform.translation;
+
+            let particle_rotation = transform.rotation;
+
+            let duration_sec = 10.0;
+            
+            let particle_speed = 150.0;
+            
+            // FIXME fix messy initialisation
+            commands.spawn_bundle(ParticleBundle::new(
+                projectile_sprite,
+                particle_pos,
+                particle_rotation,
+                duration_sec,
+            ))
+            .insert(ParticleLinearMove::move_forwards_with_speed(particle_rotation, particle_speed));
+        }
     }
 }
 
