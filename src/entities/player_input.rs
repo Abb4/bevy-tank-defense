@@ -6,7 +6,8 @@ use leafwing_input_manager::prelude::*;
 use crate::entities::particles::{ParticleBundle, ParticleLinearMove};
 
 use super::{
-    player::{MouseControlled, PlayerAction, PlayerControlled, TankBundle},
+    particles::{Collider, CollisionMask, Particle},
+    player::{MouseControlled, PlayerAction, PlayerControlled},
     shared::Movable,
 };
 
@@ -56,15 +57,11 @@ pub fn handle_player_movement(
 }
 
 pub fn handle_player_firing(
-    mut query: Query<
-        (&ActionState<PlayerAction>, &GlobalTransform),
-        With<MouseControlled>,
-    >,
+    mut query: Query<(&ActionState<PlayerAction>, &GlobalTransform), With<MouseControlled>>,
     mut commands: Commands,
 ) {
     for (action_state, global_transform) in query.iter_mut() {
         if action_state.just_pressed(PlayerAction::FireCannon) {
-
             let projectile_sprite = Sprite {
                 custom_size: Some(Vec2::new(20.0, 20.0)),
                 color: Color::rgb(0.0, 0.0, 1.0),
@@ -73,27 +70,33 @@ pub fn handle_player_firing(
 
             let transform = global_transform.compute_transform();
 
-            let particle_pos = transform.translation;
+            let particle_pos = transform.translation; // FIXME here we inherit towers z position, should be instead some constant in some struct
 
             let particle_rotation = transform.rotation;
 
-            let duration_sec = 10.0;
-            
-            let particle_speed = 150.0;
-            
+            let duration_sec = 20.0;
+
+            let particle_speed = 250.0;
+
             // FIXME fix messy initialisation
-            commands.spawn_bundle(ParticleBundle::new(
-                projectile_sprite,
-                particle_pos,
-                particle_rotation,
-                duration_sec,
-            ))
-            .insert(ParticleLinearMove::move_forwards_with_speed(particle_rotation, particle_speed));
+            commands
+                .spawn_bundle(ParticleBundle::new(
+                    projectile_sprite,
+                    particle_pos,
+                    particle_rotation,
+                    duration_sec,
+                ))
+                .insert(Particle::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
+                .insert(Collider::new(vec![CollisionMask::ENEMY]))
+                .insert(ParticleLinearMove::move_forwards_with_speed(
+                    particle_rotation,
+                    particle_speed,
+                ));
         }
     }
 }
 
-pub fn rotate_tank_turet_to_cursor(
+pub fn rotate_tank_tower_to_cursor(
     mut query: Query<(&mut Transform, &GlobalTransform), With<MouseControlled>>,
     mouse_position_q: Query<&MousePosition2d>,
 ) {

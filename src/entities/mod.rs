@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 use self::{
     ai::enemy_ai::idle_enemy_behaviour,
-    particles::{despawn_particles_after_duration, move_linear_particles},
-    player_input::{handle_player_firing, handle_player_movement, rotate_tank_turet_to_cursor},
+    particles::{despawn_particles_after_duration, move_linear_particles, damage_entities_on_collision},
+    player_input::{handle_player_firing, handle_player_movement, rotate_tank_tower_to_cursor},
     spawner::*,
 };
 
@@ -36,7 +36,8 @@ impl Plugin for EntitiesPlugin {
                 .label(GameSystems::PlayerInput)
                 .with_system(handle_player_movement)
                 .with_system(handle_player_firing)
-                .with_system(rotate_tank_turet_to_cursor)
+                .with_system(rotate_tank_tower_to_cursor)
+                .with_system(damage_entities_on_collision)
                 .with_system(move_linear_particles)
                 .with_system(despawn_particles_after_duration),
         );

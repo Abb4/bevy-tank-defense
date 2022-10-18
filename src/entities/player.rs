@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use leafwing_input_manager::prelude::*;
 
-use super::{player_input::get_input_manager, shared::Movable};
+use super::shared::Movable;
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
 pub enum PlayerAction {
@@ -20,7 +20,6 @@ pub struct TankBundle {
     pub movable: Movable,
 
     #[bundle]
-    //pub sprite: SpriteBundle,
     pub tank_body: TankBodyBundle,
 }
 
@@ -55,14 +54,8 @@ impl TankBundle {
                 rotation_speed_rad: f32::to_radians(80.0),
                 ..Default::default()
             },
-            // sprite: SpriteBundle {
-            //     sprite: player_sprite,
-            //     ..Default::default()
-            // },
             ..Default::default()
         };
-
-        //add_input_manager(&mut tank_bundle);
 
         tank_bundle
     }
@@ -86,6 +79,7 @@ impl TankTurretBundle {
                 y: 32.0,
             }), // FIXME asset sizes should be in a bevy asset
             // FIXME here manually set turret size, probably should set it with code to support different tank component sizes
+            anchor: Anchor::CenterRight,
             ..Default::default()
         };
 

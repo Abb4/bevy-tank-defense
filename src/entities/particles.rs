@@ -1,6 +1,8 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::collide_aabb::collide};
 
-#[derive(Component)]
+use super::shared::Health;
+
+#[derive(Component, Default)]
 pub struct Particle {}
 
 #[derive(Component, Default)]
@@ -30,7 +32,7 @@ impl ParticleLinearMove {
         rotation_angle *= rotation_axis.z;
 
         ParticleLinearMove {
-            move_delta: Vec2::new(- rotation_angle.cos() * speed, - rotation_angle.sin() * speed),
+            move_delta: Vec2::new(-rotation_angle.cos() * speed, -rotation_angle.sin() * speed),
         }
     }
 }
@@ -74,12 +76,10 @@ pub fn move_linear_particles(
 ) {
     for (mut transform, particle_move) in query.iter_mut() {
         let particle_position_update = particle_move.move_delta.extend(0.0) * time.delta_seconds();
-        
+
         transform.translation += particle_position_update;
     }
 }
-
-
 
 pub fn despawn_particles_after_duration(
     mut query: Query<(Entity, &mut ParticleLifetime)>,
@@ -91,6 +91,70 @@ pub fn despawn_particles_after_duration(
             commands.entity(e).despawn_recursive();
         } else {
             lifetime.duration_sec.tick(time.delta());
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum CollisionMask {
+    PLAYER,
+    ENEMY,
+}
+
+#[derive(Component)]
+pub struct Collider {
+    collision_mask: Vec<CollisionMask>,
+}
+
+impl Collider {
+    pub fn new(collision_mask: Vec<CollisionMask>) -> Self {
+        Collider { collision_mask }
+    }
+}
+
+
+pub fn damage_entities_on_collision(
+    query_particles: Query<(Entity, &Collider, &GlobalTransform, &Sprite), With<Particle>>,
+    mut query_targets: Query<
+        (Entity, &mut Health, &Collider, &GlobalTransform, &Sprite),
+        Without<Particle>,
+    >,
+    mut commands: Commands,
+) {
+    for (particle, particle_collider, particle_global_transform, particle_sprite) in
+        query_particles.iter()
+    {
+        let particle_translation = particle_global_transform.translation();
+
+        let particle_size = particle_sprite.custom_size.unwrap();
+
+        for (target, mut health, target_collider, target_global_transform, target_sprite) in
+            query_targets.iter_mut()
+        {
+            if particle_collider
+                .collision_mask
+                .iter()
+                .any(|e| target_collider.collision_mask.contains(e))
+            {
+                let target_translation = target_global_transform.translation();
+
+                let target_size = target_sprite.custom_size.unwrap();
+
+                if collide(
+                    particle_translation,
+                    particle_size,
+                    target_translation,
+                    target_size,
+                )
+                .is_some()
+                {
+                    if health.try_apply_damage(25).is_none() {
+                        commands.entity(target).despawn_recursive();
+                    }
+
+                    commands.entity(particle).despawn_recursive();
+                }
+            }
         }
     }
 }
