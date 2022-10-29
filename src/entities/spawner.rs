@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rand_utils::RandomFromRange;
 
 use crate::entities::{
     player::{MouseControlled, TankTurretBundle},
@@ -7,8 +8,9 @@ use crate::entities::{
 
 use super::{
     enemy::{Enemy, EnemyBundle},
+    particles::{Collider, CollisionMask},
     player::{PlayerControlled, TankBundle},
-    shared::{DisplayName, Health}, particles::{Collider, CollisionMask},
+    shared::{DisplayName, Health},
 };
 
 pub fn spawn_enemies_on_demand(mut commands: Commands, query: Query<&Enemy>) {
@@ -20,9 +22,14 @@ pub fn spawn_enemies_on_demand(mut commands: Commands, query: Query<&Enemy>) {
 pub fn spawn_enemy(name: &str, commands: &mut Commands) {
     let enemy = EnemyBundle::new(name);
 
-    commands.spawn_bundle(enemy)
+    commands
+        .spawn_bundle(enemy)
         .insert(Collider::new(vec![CollisionMask::ENEMY]))
-        .insert(Health::new(100));
+        .insert(Health::new(100))
+        .insert_bundle(TransformBundle::from_transform(Transform {
+            translation: Vec2::new_random_signed(&200.0, &300.0).extend(0.0),
+            ..Default::default()
+        })); // FIXME z layering needs to be read fromsome reasource
 }
 
 pub fn log_enemies_on_spawn(query: Query<&DisplayName, Added<Enemy>>) {

@@ -76,9 +76,12 @@ pub fn handle_player_firing(
 
             let duration_sec = 20.0;
 
-            let particle_speed = 250.0;
+            let particle_speed = 100.0;
 
             // FIXME fix messy initialisation
+            //create_liniar_particle(&mut commands, projectile_sprite, particle_pos, particle_rotation, duration_sec, particle_speed);
+           
+            // TODO spawn homing particle
             commands
                 .spawn_bundle(ParticleBundle::new(
                     projectile_sprite,
@@ -91,9 +94,38 @@ pub fn handle_player_firing(
                 .insert(ParticleLinearMove::move_forwards_with_speed(
                     particle_rotation,
                     particle_speed,
-                ));
+                ))
+                .insert(HomeTowardsEnemies::rotate_towards_nearest());
         }
     }
+}
+
+#[derive(Component, Default)]
+pub struct HomeTowardsEnemies {
+    
+}
+
+impl HomeTowardsEnemies {
+    pub fn rotate_towards_nearest() -> Self {
+        HomeTowardsEnemies { ..default() }
+    }
+}
+
+// TODO move this factory function into some spawners module or particle
+fn create_liniar_particle(commands: &mut Commands, projectile_sprite: Sprite, particle_pos: Vec3, particle_rotation: Quat, duration_sec: f32, particle_speed: f32) {
+    commands
+        .spawn_bundle(ParticleBundle::new(
+            projectile_sprite,
+            particle_pos,
+            particle_rotation,
+            duration_sec,
+        ))
+        .insert(Particle::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
+        .insert(Collider::new(vec![CollisionMask::ENEMY]))
+        .insert(ParticleLinearMove::move_forwards_with_speed(
+            particle_rotation,
+            particle_speed,
+        ));
 }
 
 pub fn rotate_tank_tower_to_cursor(

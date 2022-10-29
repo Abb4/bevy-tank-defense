@@ -1,6 +1,9 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide};
+use std::cmp::Ordering;
 
-use super::shared::Health;
+use bevy::{prelude::*, sprite::collide_aabb::collide};
+use bevy_transform_utils::get_angle_from_transform;
+
+use super::{enemy::Enemy, player_input::HomeTowardsEnemies, shared::Health};
 
 #[derive(Component, Default)]
 pub struct Particle {}
@@ -21,8 +24,8 @@ impl ParticleLifetime {
 
 #[derive(Component)]
 pub struct ParticleLinearMove {
-    // encode the particle move direction and speed on a vector once to avoid expensive computations
-    move_delta: Vec2,
+    move_direction: Vec2,
+    speed: f32
 }
 
 impl ParticleLinearMove {
@@ -32,7 +35,8 @@ impl ParticleLinearMove {
         rotation_angle *= rotation_axis.z;
 
         ParticleLinearMove {
-            move_delta: Vec2::new(-rotation_angle.cos() * speed, -rotation_angle.sin() * speed),
+            move_direction: Vec2::new(-rotation_angle.cos(), -rotation_angle.sin()),
+            speed
         }
     }
 }
@@ -75,11 +79,70 @@ pub fn move_linear_particles(
     time: Res<Time>,
 ) {
     for (mut transform, particle_move) in query.iter_mut() {
-        let particle_position_update = particle_move.move_delta.extend(0.0) * time.delta_seconds();
+        let particle_position_update = particle_move.move_direction.extend(0.0) * particle_move.speed * time.delta_seconds();
 
         transform.translation += particle_position_update;
     }
 }
+
+pub fn rotate_homing_particles_towards_nearest_enemies(
+    mut particles: Query<(&mut Transform, &mut ParticleLinearMove), With<HomeTowardsEnemies>>,
+    enemies: Query<&Transform, (With<Enemy>, Without<HomeTowardsEnemies>)>,
+    time: Res<Time>,
+) {
+    for (mut particle_tr, mut particle_move) in particles.iter_mut() {
+        let nearest_enemy_tr_opt = enemies.iter().min_by(|a, b| {
+            if a.translation.distance(particle_tr.translation)
+                < b.translation.distance(particle_tr.translation)
+            {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        });
+
+        if let Some(nearest_enemy_tr) = nearest_enemy_tr_opt {
+            let angle = get_angle_from_transform(
+                &particle_tr,
+                &nearest_enemy_tr.translation.truncate(),
+            );
+            particle_tr.rotate_z(angle);
+
+            let (rotation_axis, mut rotation_angle) = particle_tr.rotation.to_axis_angle();
+
+            rotation_angle *= rotation_axis.z;
+
+            particle_move.move_direction.x = -rotation_angle.cos();
+            particle_move.move_direction.y = -rotation_angle.sin();
+        }
+    }
+}
+
+// pub fn rotate_particles_towards_nearest_enemies(
+//     mut set: ParamSet<(
+//      Query<&mut Transform, With<RotateTowardsEnemies>>,
+//      Query<&Transform, With<Enemy>>)>
+// ) {
+//     let mut particles = set.p0();
+//     let enemies = set.p1();
+
+//     for mut particle_tr in particles.iter_mut() {
+//         let nearest_enemy_tr = enemies.iter().min_by(|a, b| {
+//             if a.translation.distance(particle_tr.translation)
+//                 < b.translation.distance(particle_tr.translation)
+//             {
+//                 Ordering::Less
+//             } else {
+//                 Ordering::Greater
+//             }
+//         });
+
+//         if let Some(nearest_enemy_position) = nearest_enemy_tr {
+//             let angle = get_angle_from_transform(&particle_tr, &nearest_enemy_position.translation.truncate());
+//             particle_tr.rotate_z(angle);
+//         }
+//     }
+// }
 
 pub fn despawn_particles_after_duration(
     mut query: Query<(Entity, &mut ParticleLifetime)>,
@@ -111,7 +174,6 @@ impl Collider {
         Collider { collision_mask }
     }
 }
-
 
 pub fn damage_entities_on_collision(
     query_particles: Query<(Entity, &Collider, &GlobalTransform, &Sprite), With<Particle>>,
