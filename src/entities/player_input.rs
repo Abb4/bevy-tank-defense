@@ -3,10 +3,10 @@ use bevy_mouse_position_component::MousePosition2d;
 use bevy_transform_utils::get_angle_from_transform;
 use leafwing_input_manager::prelude::*;
 
-use crate::entities::particles::{ParticleBundle, ParticleLinearMove};
+use crate::entities::particles::{ProjectileBundle, DirectedLinearMove};
 
 use super::{
-    particles::{Collider, CollisionMask, Particle},
+    particles::{Collider, CollisionMask, Projectile},
     player::{MouseControlled, PlayerAction, PlayerControlled},
     shared::Movable,
 };
@@ -70,32 +70,31 @@ pub fn handle_player_firing(
 
             let transform = global_transform.compute_transform();
 
-            let particle_pos = transform.translation; // FIXME here we inherit towers z position, should be instead some constant in some struct
+            let projectile_pos = transform.translation; // FIXME here we inherit towers z position, should be instead some constant in some struct
 
-            let particle_rotation = transform.rotation;
+            let projectile_rotation = transform.rotation;
 
             let duration_sec = 20.0;
 
             let particle_speed = 100.0;
 
             // FIXME fix messy initialisation
-            //create_liniar_particle(&mut commands, projectile_sprite, particle_pos, particle_rotation, duration_sec, particle_speed);
+            create_liniar_particle(&mut commands, projectile_sprite, projectile_pos, projectile_rotation, duration_sec, particle_speed);
            
-            // TODO spawn homing particle
             commands
-                .spawn_bundle(ParticleBundle::new(
+                .spawn_bundle(ProjectileBundle::new(
                     projectile_sprite,
-                    particle_pos,
-                    particle_rotation,
+                    projectile_pos,
+                    projectile_rotation,
                     duration_sec,
                 ))
-                .insert(Particle::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
+                .insert(Projectile::default()) // TODO maybe simplify this by making queries more complex to check for Particle subtypes?
                 .insert(Collider::new(vec![CollisionMask::ENEMY]))
-                .insert(ParticleLinearMove::move_forwards_with_speed(
-                    particle_rotation,
+                .insert(DirectedLinearMove::move_forwards_with_speed(
+                    projectile_rotation,
                     particle_speed,
                 ))
-                .insert(HomeTowardsEnemies::rotate_towards_nearest());
+                .insert(HomeTowardsEnemies::home_towards_nearest_enemy());
         }
     }
 }
@@ -106,24 +105,24 @@ pub struct HomeTowardsEnemies {
 }
 
 impl HomeTowardsEnemies {
-    pub fn rotate_towards_nearest() -> Self {
+    pub fn home_towards_nearest_enemy() -> Self {
         HomeTowardsEnemies { ..default() }
     }
 }
 
 // TODO move this factory function into some spawners module or particle
-fn create_liniar_particle(commands: &mut Commands, projectile_sprite: Sprite, particle_pos: Vec3, particle_rotation: Quat, duration_sec: f32, particle_speed: f32) {
+fn create_liniar_particle(commands: &mut Commands, projectile_sprite: Sprite, projectile_pos: Vec3, projectile_rotation: Quat, duration_sec: f32, particle_speed: f32) {
     commands
-        .spawn_bundle(ParticleBundle::new(
+        .spawn_bundle(ProjectileBundle::new(
             projectile_sprite,
-            particle_pos,
-            particle_rotation,
+            projectile_pos,
+            projectile_rotation,
             duration_sec,
         ))
-        .insert(Particle::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
+        .insert(Projectile::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
         .insert(Collider::new(vec![CollisionMask::ENEMY]))
-        .insert(ParticleLinearMove::move_forwards_with_speed(
-            particle_rotation,
+        .insert(DirectedLinearMove::move_forwards_with_speed(
+            projectile_rotation,
             particle_speed,
         ));
 }

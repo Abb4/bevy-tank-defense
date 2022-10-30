@@ -6,35 +6,35 @@ use bevy_transform_utils::get_angle_from_transform;
 use super::{enemy::Enemy, player_input::HomeTowardsEnemies, shared::Health};
 
 #[derive(Component, Default)]
-pub struct Particle {}
+pub struct Projectile {}
 
 #[derive(Component, Default)]
-pub struct ParticleLifetime {
+pub struct Lifetime {
     duration_sec: Timer,
 }
 
-impl ParticleLifetime {
-    pub fn new(particle_lifetime_duration_sec: f32) -> Self {
-        ParticleLifetime {
-            duration_sec: Timer::from_seconds(particle_lifetime_duration_sec, true),
+impl Lifetime {
+    pub fn new(lifetime_duration_sec: f32) -> Self {
+        Lifetime {
+            duration_sec: Timer::from_seconds(lifetime_duration_sec, true),
             ..Default::default()
         }
     }
 }
 
 #[derive(Component)]
-pub struct ParticleLinearMove {
+pub struct DirectedLinearMove {
     move_direction: Vec2,
     speed: f32
 }
 
-impl ParticleLinearMove {
+impl DirectedLinearMove {
     pub fn move_forwards_with_speed(rotation: Quat, speed: f32) -> Self {
         let (rotation_axis, mut rotation_angle) = rotation.to_axis_angle();
 
         rotation_angle *= rotation_axis.z;
 
-        ParticleLinearMove {
+        DirectedLinearMove {
             move_direction: Vec2::new(-rotation_angle.cos(), -rotation_angle.sin()),
             speed
         }
@@ -42,24 +42,24 @@ impl ParticleLinearMove {
 }
 
 #[derive(Bundle, Default)]
-pub struct ParticleBundle {
-    particle_lifetime: ParticleLifetime,
+pub struct ProjectileBundle {
+    projectile_lifetime: Lifetime,
 
     #[bundle]
     sprite: SpriteBundle,
 }
 
-impl ParticleBundle {
+impl ProjectileBundle {
     pub fn new(
         sprite: Sprite,
         position: Vec3,
         rotation: Quat,
         particle_lifetime_duration_sec: f32,
     ) -> Self {
-        let particle_lifetime = ParticleLifetime::new(particle_lifetime_duration_sec);
+        let particle_lifetime = Lifetime::new(particle_lifetime_duration_sec);
 
-        ParticleBundle {
-            particle_lifetime,
+        ProjectileBundle {
+            projectile_lifetime: particle_lifetime,
             sprite: SpriteBundle {
                 sprite,
                 transform: Transform {
@@ -75,7 +75,7 @@ impl ParticleBundle {
 }
 
 pub fn move_linear_particles(
-    mut query: Query<(&mut Transform, &ParticleLinearMove)>,
+    mut query: Query<(&mut Transform, &DirectedLinearMove)>,
     time: Res<Time>,
 ) {
     for (mut transform, particle_move) in query.iter_mut() {
@@ -85,15 +85,15 @@ pub fn move_linear_particles(
     }
 }
 
-pub fn rotate_homing_particles_towards_nearest_enemies(
-    mut particles: Query<(&mut Transform, &mut ParticleLinearMove), With<HomeTowardsEnemies>>,
+pub fn rotate_homing_entities_towards_nearest_enemies(
+    mut particles: Query<(&mut Transform, &mut DirectedLinearMove), With<HomeTowardsEnemies>>,
     enemies: Query<&Transform, (With<Enemy>, Without<HomeTowardsEnemies>)>,
     time: Res<Time>,
 ) {
-    for (mut particle_tr, mut particle_move) in particles.iter_mut() {
+    for (mut entitiy_tr, mut entity_move) in particles.iter_mut() {
         let nearest_enemy_tr_opt = enemies.iter().min_by(|a, b| {
-            if a.translation.distance(particle_tr.translation)
-                < b.translation.distance(particle_tr.translation)
+            if a.translation.distance(entitiy_tr.translation)
+                < b.translation.distance(entitiy_tr.translation)
             {
                 Ordering::Less
             } else {
@@ -103,55 +103,29 @@ pub fn rotate_homing_particles_towards_nearest_enemies(
 
         if let Some(nearest_enemy_tr) = nearest_enemy_tr_opt {
             let angle = get_angle_from_transform(
-                &particle_tr,
+                &entitiy_tr,
                 &nearest_enemy_tr.translation.truncate(),
             );
-            particle_tr.rotate_z(angle);
+            entitiy_tr.rotate_z(angle);
 
-            let (rotation_axis, mut rotation_angle) = particle_tr.rotation.to_axis_angle();
+            let (rotation_axis, mut rotation_angle) = entitiy_tr.rotation.to_axis_angle();
 
             rotation_angle *= rotation_axis.z;
 
-            particle_move.move_direction.x = -rotation_angle.cos();
-            particle_move.move_direction.y = -rotation_angle.sin();
+            entity_move.move_direction.x = -rotation_angle.cos();
+            entity_move.move_direction.y = -rotation_angle.sin();
         }
     }
 }
 
-// pub fn rotate_particles_towards_nearest_enemies(
-//     mut set: ParamSet<(
-//      Query<&mut Transform, With<RotateTowardsEnemies>>,
-//      Query<&Transform, With<Enemy>>)>
-// ) {
-//     let mut particles = set.p0();
-//     let enemies = set.p1();
-
-//     for mut particle_tr in particles.iter_mut() {
-//         let nearest_enemy_tr = enemies.iter().min_by(|a, b| {
-//             if a.translation.distance(particle_tr.translation)
-//                 < b.translation.distance(particle_tr.translation)
-//             {
-//                 Ordering::Less
-//             } else {
-//                 Ordering::Greater
-//             }
-//         });
-
-//         if let Some(nearest_enemy_position) = nearest_enemy_tr {
-//             let angle = get_angle_from_transform(&particle_tr, &nearest_enemy_position.translation.truncate());
-//             particle_tr.rotate_z(angle);
-//         }
-//     }
-// }
-
-pub fn despawn_particles_after_duration(
-    mut query: Query<(Entity, &mut ParticleLifetime)>,
+pub fn despawn_entity_after_duration_expires(
+    mut query: Query<(Entity, &mut Lifetime)>,
     mut commands: Commands,
     time: Res<Time>,
 ) {
-    for (e, mut lifetime) in query.iter_mut() {
+    for (entity, mut lifetime) in query.iter_mut() {
         if lifetime.duration_sec.finished() {
-            commands.entity(e).despawn_recursive();
+            commands.entity(entity).despawn_recursive();
         } else {
             lifetime.duration_sec.tick(time.delta());
         }
@@ -176,10 +150,10 @@ impl Collider {
 }
 
 pub fn damage_entities_on_collision(
-    query_particles: Query<(Entity, &Collider, &GlobalTransform, &Sprite), With<Particle>>,
+    query_particles: Query<(Entity, &Collider, &GlobalTransform, &Sprite), With<Projectile>>,
     mut query_targets: Query<
         (Entity, &mut Health, &Collider, &GlobalTransform, &Sprite),
-        Without<Particle>,
+        Without<Projectile>,
     >,
     mut commands: Commands,
 ) {
