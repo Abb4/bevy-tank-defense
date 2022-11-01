@@ -3,12 +3,9 @@ use bevy_mouse_position_component::MousePosition2d;
 use bevy_transform_utils::get_angle_from_transform;
 use leafwing_input_manager::prelude::*;
 
-use crate::entities::projectiles::{ProjectileBundle, DirectedLinearMove};
-
 use super::{
-    projectiles::{Projectile},
-    player::{MouseControlled, PlayerAction, PlayerControlled},
-    shared::{Movable, Collider, CollisionMask},
+    player::{ PlayerAction, PlayerControlled},
+    shared::{Movable, MouseControlled}, spawner::create_projectile,
 };
 
 pub fn get_input_manager() -> InputManagerBundle<PlayerAction> {
@@ -78,53 +75,9 @@ pub fn handle_player_firing(
 
             let particle_speed = 100.0;
 
-            // FIXME fix messy initialisation
-            create_liniar_particle(&mut commands, projectile_sprite, projectile_pos, projectile_rotation, duration_sec, particle_speed);
-           
-            commands
-                .spawn_bundle(ProjectileBundle::new(
-                    projectile_sprite,
-                    projectile_pos,
-                    projectile_rotation,
-                    duration_sec,
-                ))
-                .insert(Projectile::default()) // TODO maybe simplify this by making queries more complex to check for Particle subtypes?
-                .insert(Collider::new(vec![CollisionMask::ENEMY]))
-                .insert(DirectedLinearMove::move_forwards_with_speed(
-                    projectile_rotation,
-                    particle_speed,
-                ))
-                .insert(HomeTowardsEnemies::home_towards_nearest_enemy());
+            create_projectile(&mut commands, projectile_sprite, projectile_pos, projectile_rotation, duration_sec, particle_speed);
         }
     }
-}
-
-#[derive(Component, Default)]
-pub struct HomeTowardsEnemies {
-    
-}
-
-impl HomeTowardsEnemies {
-    pub fn home_towards_nearest_enemy() -> Self {
-        HomeTowardsEnemies { ..default() }
-    }
-}
-
-// TODO move this factory function into some spawners module or particle
-fn create_liniar_particle(commands: &mut Commands, projectile_sprite: Sprite, projectile_pos: Vec3, projectile_rotation: Quat, duration_sec: f32, particle_speed: f32) {
-    commands
-        .spawn_bundle(ProjectileBundle::new(
-            projectile_sprite,
-            projectile_pos,
-            projectile_rotation,
-            duration_sec,
-        ))
-        .insert(Projectile::default()) // TODO maybe simplify this by making queries morecomplex to check for Particle subtypes?
-        .insert(Collider::new(vec![CollisionMask::ENEMY]))
-        .insert(DirectedLinearMove::move_forwards_with_speed(
-            projectile_rotation,
-            particle_speed,
-        ));
 }
 
 pub fn rotate_tank_tower_to_cursor(

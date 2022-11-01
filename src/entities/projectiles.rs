@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 use bevy_transform_utils::get_angle_from_transform;
 
-use super::{enemy::Enemy, player_input::HomeTowardsEnemies, shared::{Health, Lifetime, Collider}};
+use super::{enemy::Enemy, shared::{Health, Lifetime, Collider}, spawner::HomeTowardsEnemies};
 
 #[derive(Component, Default)]
 pub struct Projectile {}
@@ -99,8 +99,8 @@ pub fn rotate_homing_entities_towards_nearest_enemies(
 
             rotation_angle *= rotation_axis.z;
 
-            entity_move.move_direction.x = -rotation_angle.cos();
-            entity_move.move_direction.y = -rotation_angle.sin();
+            entity_move.move_direction.x = -rotation_angle.cos() * time.delta_seconds();
+            entity_move.move_direction.y = -rotation_angle.sin() * time.delta_seconds();
         }
     }
 }

@@ -100,3 +100,6 @@ impl Collider {
         Collider { collision_mask }
     }
 }
+
+#[derive(Component, Default)]
+pub struct MouseControlled;

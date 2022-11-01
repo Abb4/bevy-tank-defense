@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
 use super::shared::Movable;
@@ -48,7 +48,7 @@ impl Default for TankBodyBundle {
 
 impl TankBundle {
     pub fn new() -> Self {
-        let mut tank_bundle = TankBundle {
+        let tank_bundle = TankBundle {
             movable: Movable {
                 speed: 100,
                 rotation_speed_rad: f32::to_radians(80.0),
@@ -58,41 +58,5 @@ impl TankBundle {
         };
 
         tank_bundle
-    }
-}
-
-#[derive(Component, Default)]
-pub struct MouseControlled;
-
-#[derive(Bundle, Default)]
-pub struct TankTurretBundle {
-    #[bundle]
-    pub sprite: SpriteBundle,
-}
-
-impl TankTurretBundle {
-    pub fn new(tank_layer: i8) -> Self {
-        let tank_turret_sprite = Sprite {
-            color: Color::rgb(0.0, 1.0, 0.0),
-            custom_size: Some(Vec2 {
-                x: 2.0 * 32.0,
-                y: 32.0,
-            }), // FIXME asset sizes should be in a bevy asset
-            // FIXME here manually set turret size, probably should set it with code to support different tank component sizes
-            anchor: Anchor::CenterRight,
-            ..Default::default()
-        };
-
-        TankTurretBundle {
-            sprite: SpriteBundle {
-                sprite: tank_turret_sprite,
-                transform: Transform {
-                    translation: Vec3::new(0.0, 10.0, tank_layer as f32),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            ..default()
-        }
     }
 }
