@@ -8,7 +8,7 @@ use crate::entities::{
 
 use super::{
     enemy::{Enemy, EnemyBundle},
-    particles::{Collider, CollisionMask},
+    projectiles::{Collider, CollisionMask},
     player::{PlayerControlled, TankBundle},
     shared::{DisplayName, Health},
 };

@@ -3,10 +3,10 @@ use bevy_mouse_position_component::MousePosition2d;
 use bevy_transform_utils::get_angle_from_transform;
 use leafwing_input_manager::prelude::*;
 
-use crate::entities::particles::{ProjectileBundle, DirectedLinearMove};
+use crate::entities::projectiles::{ProjectileBundle, DirectedLinearMove};
 
 use super::{
-    particles::{Collider, CollisionMask, Projectile},
+    projectiles::{Collider, CollisionMask, Projectile},
     player::{MouseControlled, PlayerAction, PlayerControlled},
     shared::Movable,
 };
