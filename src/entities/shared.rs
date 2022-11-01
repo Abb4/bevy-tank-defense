@@ -69,3 +69,34 @@ impl Health {
         return None;
     }
 }
+
+#[derive(Component, Default)]
+pub struct Lifetime {
+    pub duration_sec: Timer,
+}
+
+impl Lifetime {
+    pub fn new(lifetime_duration_sec: f32) -> Self {
+        Lifetime {
+            duration_sec: Timer::from_seconds(lifetime_duration_sec, true),
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum CollisionMask {
+    PLAYER,
+    ENEMY,
+}
+
+#[derive(Component)]
+pub struct Collider {
+    pub collision_mask: Vec<CollisionMask>,
+}
+
+impl Collider {
+    pub fn new(collision_mask: Vec<CollisionMask>) -> Self {
+        Collider { collision_mask }
+    }
+}

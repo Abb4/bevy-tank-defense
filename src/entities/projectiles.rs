@@ -3,24 +3,11 @@ use std::cmp::Ordering;
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 use bevy_transform_utils::get_angle_from_transform;
 
-use super::{enemy::Enemy, player_input::HomeTowardsEnemies, shared::Health};
+use super::{enemy::Enemy, player_input::HomeTowardsEnemies, shared::{Health, Lifetime, Collider}};
 
 #[derive(Component, Default)]
 pub struct Projectile {}
 
-#[derive(Component, Default)]
-pub struct Lifetime {
-    duration_sec: Timer,
-}
-
-impl Lifetime {
-    pub fn new(lifetime_duration_sec: f32) -> Self {
-        Lifetime {
-            duration_sec: Timer::from_seconds(lifetime_duration_sec, true),
-            ..Default::default()
-        }
-    }
-}
 
 #[derive(Component)]
 pub struct DirectedLinearMove {
@@ -132,22 +119,6 @@ pub fn despawn_entity_after_duration_expires(
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub enum CollisionMask {
-    PLAYER,
-    ENEMY,
-}
-
-#[derive(Component)]
-pub struct Collider {
-    collision_mask: Vec<CollisionMask>,
-}
-
-impl Collider {
-    pub fn new(collision_mask: Vec<CollisionMask>) -> Self {
-        Collider { collision_mask }
-    }
-}
 
 pub fn damage_entities_on_collision(
     query_particles: Query<(Entity, &Collider, &GlobalTransform, &Sprite), With<Projectile>>,

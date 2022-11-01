@@ -8,9 +8,8 @@ use crate::entities::{
 
 use super::{
     enemy::{Enemy, EnemyBundle},
-    projectiles::{Collider, CollisionMask},
     player::{PlayerControlled, TankBundle},
-    shared::{DisplayName, Health},
+    shared::{DisplayName, Health, Collider, CollisionMask},
 };
 
 pub fn spawn_enemies_on_demand(mut commands: Commands, query: Query<&Enemy>) {

@@ -6,9 +6,9 @@ use leafwing_input_manager::prelude::*;
 use crate::entities::projectiles::{ProjectileBundle, DirectedLinearMove};
 
 use super::{
-    projectiles::{Collider, CollisionMask, Projectile},
+    projectiles::{Projectile},
     player::{MouseControlled, PlayerAction, PlayerControlled},
-    shared::Movable,
+    shared::{Movable, Collider, CollisionMask},
 };
 
 pub fn get_input_manager() -> InputManagerBundle<PlayerAction> {
