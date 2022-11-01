@@ -2,16 +2,19 @@ use bevy::prelude::*;
 
 use self::{
     ai::enemy_ai::idle_enemy_behaviour,
-    player_input::{handle_player_movement, rotate_tank_tower_to_cursor},
+    projectiles::{despawn_entity_after_duration_expires, move_linear_particles, damage_entities_on_collision, rotate_homing_entities_towards_nearest_enemies},
+    player_input::{handle_player_firing, handle_player_movement, rotate_tank_tower_to_cursor},
     spawner::*,
 };
 
 pub mod ai;
 pub mod enemy;
+pub mod projectiles;
 pub mod player;
 pub mod player_input;
 pub mod shared;
 pub mod spawner;
+
 pub struct EntitiesPlugin;
 
 #[derive(SystemLabel)]
@@ -32,7 +35,12 @@ impl Plugin for EntitiesPlugin {
             SystemSet::new()
                 .label(GameSystems::PlayerInput)
                 .with_system(handle_player_movement)
-                .with_system(rotate_tank_tower_to_cursor),
+                .with_system(handle_player_firing)
+                .with_system(rotate_tank_tower_to_cursor)
+                .with_system(damage_entities_on_collision)
+                .with_system(move_linear_particles)
+                .with_system(rotate_homing_entities_towards_nearest_enemies)
+                .with_system(despawn_entity_after_duration_expires),
         );
 
         app.add_system_set(

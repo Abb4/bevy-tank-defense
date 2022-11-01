@@ -42,3 +42,64 @@ impl Default for EntitySharedBundle {
         }
     }
 }
+
+#[derive(Component)]
+pub struct Health {
+    pub max_health: u16,
+    pub current_health: u16,
+}
+
+impl Health {
+    pub fn new(initial_health: u16) -> Self {
+        Health {
+            max_health: initial_health,
+            current_health: initial_health,
+        }
+    }
+
+    pub fn try_apply_damage(&mut self, damage: u16) -> Option<u16> {
+        if let Some(new_health) = self.current_health.checked_sub(damage) {
+            self.current_health = new_health;
+
+            if self.current_health > 0 {
+                return Some(new_health);
+            }
+        }
+
+        return None;
+    }
+}
+
+#[derive(Component, Default)]
+pub struct Lifetime {
+    pub duration_sec: Timer,
+}
+
+impl Lifetime {
+    pub fn new(lifetime_duration_sec: f32) -> Self {
+        Lifetime {
+            duration_sec: Timer::from_seconds(lifetime_duration_sec, true),
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum CollisionMask {
+    PLAYER,
+    ENEMY,
+}
+
+#[derive(Component)]
+pub struct Collider {
+    pub collision_mask: Vec<CollisionMask>,
+}
+
+impl Collider {
+    pub fn new(collision_mask: Vec<CollisionMask>) -> Self {
+        Collider { collision_mask }
+    }
+}
+
+#[derive(Component, Default)]
+pub struct MouseControlled;
